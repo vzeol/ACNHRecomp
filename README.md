@@ -3,7 +3,9 @@
 >
 > **This fork exists only to test online play on the current version**, while it gets fixed and debugged until it reaches a confirmed stable state. The goal is to have it integrated into [ACNHRecomp](https://github.com/Nycolazs/ACNHRecomp) ([pull request](https://github.com/Nycolazs/ACNHRecomp/pull/26)); that decision belongs to its maintainer. This fork is not a replacement for the project and is not meant to continue on its own.
 >
-> **Expect bugs, disconnections and crashes. Back up your save. Report problems with these test builds here, not to ACNHRecomp.** Only play with people you trust.
+> **Expect bugs, disconnections and crashes. Back up your save.** Only play with people you trust.
+>
+> **Online play problems: [issues on this fork](https://github.com/vzeol/ACNHRecomp/issues). Anything else (the game, graphics, the importer...): [the official ACNHRecomp](https://github.com/Nycolazs/ACNHRecomp/issues).**
 >
 > The test code is on the [`online-play`](https://github.com/vzeol/ACNHRecomp/tree/online-play) branch, its builds under [Releases](https://github.com/vzeol/ACNHRecomp/releases). **For normal play, use the [official releases](https://github.com/Nycolazs/ACNHRecomp/releases/latest).** Everything below this box is the original project's README.
 
