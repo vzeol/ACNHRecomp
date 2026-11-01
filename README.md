@@ -7,7 +7,35 @@
 >
 > **Online play problems: [issues on this fork](https://github.com/vzeol/ACNHRecomp/issues). Anything else (the game, graphics, the importer...): [the official ACNHRecomp](https://github.com/Nycolazs/ACNHRecomp/issues).**
 >
-> The test code is on the [`online-play`](https://github.com/vzeol/ACNHRecomp/tree/online-play) branch, its builds under [Releases](https://github.com/vzeol/ACNHRecomp/releases). **For normal play, use the [official releases](https://github.com/Nycolazs/ACNHRecomp/releases/latest).** Everything below this box is the original project's README.
+> The test code is on the [`online-play`](https://github.com/vzeol/ACNHRecomp/tree/online-play) branch, its builds under [Releases](https://github.com/vzeol/ACNHRecomp/releases). **For normal play, use the [official releases](https://github.com/Nycolazs/ACNHRecomp/releases/latest).** Everything after the next section is the original project's README.
+
+## Test online play: starting from nothing
+
+You need your own copy of the game (NSP or XCI, its update, any DLC) and your console's `prod.keys`. **Nothing of the game is provided here, and ACNHRecomp-Importer is not distributed here.** Don't ask for or share game files, keys or game folders.
+
+1. **Get ACNHRecomp-Importer** from the [official project's Discord](https://discord.gg/VJW9Dtdu7a). No compiler or developer tools needed. On Linux, make it executable first (`chmod +x`).
+2. **Run it.** Give it `prod.keys`, your game files, and an empty output folder (about 30 GB free). It took about 13 minutes on a 16-thread PC, longer on a smaller one. Its first time estimate can be far too high.
+3. **Download [the test build](https://github.com/vzeol/ACNHRecomp/releases/latest)** for your system and extract it into a new folder. Under Releases, it is marked as a pre-release.
+4. **Start the launcher** (`ACNHRecomp Launcher.exe`, or `Start ACNHRecomp.sh` on Linux) and choose the folder the importer wrote. Keep that folder where it is.
+5. **Turn online play on:** click during the launcher's 3-second countdown to stay in it, or press F1 in the game, then go to the **Online** page.
+6. **Back up your save.** Play until your island has access to the airport's local play, or import a save of your own.
+
+### Playing together
+
+- **Host:** open the airport (Local Play > invite), then send the address shown on the Online page. The port opens by itself (UPnP). **Close the island before quitting the game**, or the port stays open on your router until it expires.
+- **Visitor:** paste that address under "Friend's address", check that the test names the island, then talk to Orville. On the same network the island should show up by itself.
+- Use the same game version on both sides if you can: different versions have not been tested. Only the host has to be reachable, so a first game is easiest if the person with the better connection hosts.
+
+### If it doesn't work
+
+- **Linux, black window that closes at startup:** put any `.ttf` as `fonts/shared.ttf` in your game folder.
+- **Island not found with the right address:** a player id already on that island hides it (copies of one save).
+- **No address shown:** a connection without a public address (CGNAT), or UPnP off on the router, can visit but not host.
+- **The launcher offers an update:** that is the official version, without online play.
+
+Online play problems: [issues on this fork](https://github.com/vzeol/ACNHRecomp/issues), with your system, GPU and `nx_play.log` (read it before sharing). Anything else: [the official ACNHRecomp](https://github.com/Nycolazs/ACNHRecomp/issues).
+
+---
 
 # ACNHRecomp
 
