@@ -615,6 +615,11 @@ void ui_picture_shown() {
     if (!g_picture_ns) g_picture_ns = duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count();
 }
 
+void ui_open_online() {
+    settings_show_online();
+    g_visible = true;
+}
+
 void ui_toggle() {
     g_visible = !g_visible;
     g_first_hint = false;

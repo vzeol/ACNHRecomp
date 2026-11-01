@@ -17,8 +17,10 @@
 
 #include <nx/runtime.h>
 
+#include "config.h"
 #include "hle_ldn.h"
 #include "kernel.h"
+#include "ui/ui.h"
 
 namespace nx {
 
@@ -35,7 +37,19 @@ const char* state_name(uint32_t s) {
     return s < 7 ? n[s] : "?";
 }
 
-bool enabled() { return ldn_enabled(); }
+// Read once, when the game starts local play, and held until it ends: turning the setting off in the middle of a visit
+// would cut the game's sockets and leave the port open at the end.
+std::atomic<bool> g_session{false};
+
+bool wanted() {
+    static const bool forced = [] {
+        const char* e = std::getenv("NX_LDN");
+        return e && e[0] == '1';
+    }();
+    return forced || config_get("online.enabled") == "1";
+}
+
+bool enabled() { return g_session; }
 
 std::mutex g_lock;
 uint32_t g_state = None;
@@ -141,12 +155,16 @@ void set_state(uint32_t s) {
 }
 
 void disabled(CPU& c) {
-    if (!enabled()) return void(c.x[0] = kLdnDeviceDisabled);
+    if (!wanted()) return void(c.x[0] = kLdnDeviceDisabled);
     c.x[0] = kOk;
 }
 
 void Initialize(CPU& c) {
-    if (!enabled()) return void(c.x[0] = kLdnDeviceDisabled);
+    if (!wanted()) {  // the game only says nothing and goes back to Orville: show where the setting is
+        ui::ui_open_online();
+        return void(c.x[0] = kLdnDeviceDisabled);
+    }
+    g_session = true;
     std::lock_guard lk(g_lock);
     log("ldn: Initialize (%s)", hle_current_name());
     if (g_state == None) set_state(Initialized);
@@ -154,9 +172,13 @@ void Initialize(CPU& c) {
 }
 
 void Finalize(CPU& c) {
-    if (enabled()) link_stop();
+    if (enabled()) {  // whatever the setting says by now: the link and the port end with the session
+        link_stop();
+        vsock_reset();
+    }
     std::lock_guard lk(g_lock);
     if (enabled()) log("ldn: Finalize");
+    g_session = false;
     g_own_ip = 0;
     g_state = None;
     c.x[0] = kOk;
@@ -399,17 +421,30 @@ void Reject(CPU& c) {
 
 }  // namespace
 
-bool ldn_enabled() {
-    static const bool on = [] {
-        const char* e = std::getenv("NX_LDN");
-        return e && e[0] == '1';
-    }();
-    return on;
-}
+bool ldn_enabled() { return g_session; }
 
 bool ldn_net_up() { return g_own_ip != 0; }
 uint32_t ldn_own_ip() { return g_own_ip; }
 uint32_t ldn_broadcast_ip() { return g_own_ip | 0xFFu; }
+
+bool ldn_info_valid(uint8_t* info) {
+    uint16_t adv;
+    std::memcpy(&adv, info + kNiAdvSize, 2);
+    const uint8_t max = info[kNiNodeMax], count = info[kNiNodeCount];
+    if (info[kNiSsid] > 32 || max < 1 || max > 8 || count < 1 || count > max || adv > sizeof g_advertise) return false;
+    info[kNiSsid + 0x21] = 0;
+    for (int i = 0; i < 8; i++) {
+        uint8_t* node = info + kNiNodes + size_t(i) * 0x40;
+        if (!node[kNodeConnected]) {
+            std::memset(node, 0, 0x40);
+            continue;
+        }
+        node[kNodeConnected] = 1;
+        node[kNodeId] = uint8_t(i);
+        node[kNodeName + 0x20] = 0;
+    }
+    return true;
+}
 
 bool ldn_link_info(uint8_t* out) {
     std::lock_guard lk(g_lock);

@@ -30,6 +30,7 @@ void ui_event(const SDL_Event& e);               // every SDL event (keys, mouse
 bool ui_pad(uint64_t buttons, int32_t lx, int32_t ly);
 bool ui_visible();
 void ui_toggle();
+void ui_open_online();  // the settings screen, on its Online page: from any thread
 // Touch screens (Android): one finger as the mouse, in pixels of the presented image. Returns true when the menu
 // took the touch (it is open): the game must not see it.
 bool ui_touch(float x, float y, bool down);

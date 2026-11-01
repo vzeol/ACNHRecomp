@@ -213,6 +213,8 @@ set(NX_RUNTIME_SOURCES
     runtime/src/hle_ldn.cpp
     runtime/src/hle_vsock.cpp
     runtime/src/ldn_link.cpp
+    runtime/src/ldn_discovery.cpp
+    runtime/src/ldn_upnp.cpp
     runtime/src/hle_audio.cpp
     runtime/src/hle_pl.cpp
     runtime/src/hle_nfp.cpp

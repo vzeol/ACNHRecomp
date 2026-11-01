@@ -1,7 +1,7 @@
 // nn::socket on the local play network (NX_LDN=1, docs/LOCAL_PLAY.md): the game's own traffic (Pia) is UDP between
 // addresses of the LDN subnet, which only exist here. Sockets are a table of queues; datagrams go through hle_ldn.cpp.
 // Errors are the Switch's (Linux numbers), as are the socket options. Stream sockets are not carried yet.
-// Without NX_LDN every call fails, as on a console with no network (hle_net.cpp).
+// Outside a local play session every call fails, as on a console with no network (hle_net.cpp).
 #include <chrono>
 #include <condition_variable>
 #include <cstdio>
@@ -350,6 +350,12 @@ void GetLastError_(CPU& c) { c.x[0] = uint64_t(uint32_t(t_errno ? t_errno : (ldn
 void SetLastError_(CPU& c) { t_errno = int(c.x[0]); }
 
 }  // namespace
+
+void vsock_reset() {
+    std::lock_guard lk(g_mu);
+    for (Sock& s : g_socks) s = Sock{};
+    g_cv.notify_all();
+}
 
 void vsock_deliver(uint32_t src_ip, uint16_t src_port, uint32_t dst_ip, uint16_t dst_port, const void* data,
                    uint32_t len) {
