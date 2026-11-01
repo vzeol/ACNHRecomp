@@ -15,7 +15,7 @@ You need your own copy of the game (NSP or XCI, its update, any DLC) and your co
 
 1. **Get ACNHRecomp-Importer** from the [official project's Discord](https://discord.gg/VJW9Dtdu7a). No compiler or developer tools needed. On Linux, make it executable first (`chmod +x`).
 2. **Run it.** Give it `prod.keys`, your game files, and an empty output folder (about 30 GB free). It took about 13 minutes on a 16-thread PC, longer on a smaller one. Its first time estimate can be far too high.
-3. **Download [the test build](https://github.com/vzeol/ACNHRecomp/releases/latest)** for your system and extract it into a new folder. Under Releases, it is marked as a pre-release.
+3. **Download [the test build](https://github.com/vzeol/ACNHRecomp/releases/tag/v0.6.4-online-exp1)** for your system and extract it into a new folder.
 4. **Start the launcher** (`ACNHRecomp Launcher.exe`, or `Start ACNHRecomp.sh` on Linux) and choose the folder the importer wrote. Keep that folder where it is.
 5. **Turn online play on:** click during the launcher's 3-second countdown to stay in it, or press F1 in the game, then go to the **Online** page.
 6. **Back up your save.** Play until your island has access to the airport's local play, or import a save of your own.
