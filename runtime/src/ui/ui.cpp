@@ -59,6 +59,7 @@ std::atomic<bool> g_first_hint{true};  // the "F1: settings" hint at startup
 std::atomic<int64_t> g_picture_ns{0};  // when the game's first picture was shown: the hint's clock starts there
 std::atomic<bool> g_capture{false};     // a key binding is being chosen (settings.cpp)
 std::atomic<int> g_captured{0};
+std::atomic<bool> g_text_field{false};  // a text field has the keyboard (ui_text_field)
 
 void push(const Input& in) {
     std::lock_guard lk(g_in_lock);
@@ -412,6 +413,7 @@ void ui_record(VkCommandBuffer cb, VkImage image, VkFormat format, VkExtent2D ex
     feed_input(io);
     ImGui_ImplVulkan_NewFrame();
     ImGui::NewFrame();
+    g_text_field = io.WantTextInput;
     ImGui::PushFont(g_font_body);
     if (g_visible) {
         if (!settings_draw(scale, g_font_title)) g_visible = false;  // closed from the screen
@@ -602,6 +604,8 @@ bool ui_pad(uint64_t buttons, int32_t lx, int32_t ly) {
 }
 
 bool ui_visible() { return g_visible; }
+
+bool ui_text_field() { return g_visible && g_text_field; }
 
 void ui_begin_key_capture() {
     g_captured = 0;
