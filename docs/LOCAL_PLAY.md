@@ -48,7 +48,8 @@ Variables: `NX_LDN=1` forces it on, `NX_LDN_PORT`, `NX_LDN_JOIN=host[:port],...`
 `ldn:` and `vsock:` in the log show the calls.
 
 Tested on Windows: 6 instances on one PC, a desktop and a laptop on one LAN, and a laptop on a 5G hotspot joining a desktop
-for 30 minutes (Livebox 7). Not tested yet: Linux, macOS, two hosts behind one router. Known: a visitor whose player id is
+for 30 minutes (Livebox 7). Tested between Windows and Linux (Bazzite, NVIDIA), each hosting in turn, through the router's
+public address. Not tested yet: macOS, two hosts behind one router at once. Known: a visitor whose player id is
 already on the island does not see it (the game's own check, seen with copies of one save); some routers only answer UPnP
 once it has been turned off and on again.
 

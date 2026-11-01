@@ -19,7 +19,7 @@ inline void sock_close(sock_t s) { closesocket(s); }
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <sys/select.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
 using sock_t = int;
@@ -33,6 +33,10 @@ inline void sock_close(sock_t s) { close(s); }
 #include <string>
 #include <vector>
 
+#if !defined(MSG_NOSIGNAL)
+#define MSG_NOSIGNAL 0  // Windows has no SIGPIPE; macOS: no_sigpipe
+#endif
+
 namespace nx {
 
 inline void net_init() {
@@ -45,10 +49,20 @@ inline void net_init() {
 #endif
 }
 
+// A send to a player who just left must not end the game with SIGPIPE: MSG_NOSIGNAL here, this on macOS.
+inline void no_sigpipe(sock_t s) {
+#if defined(SO_NOSIGPIPE)
+    int one = 1;
+    setsockopt(s, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof one);
+#else
+    (void)s;
+#endif
+}
+
 inline bool send_all(sock_t s, const void* p, size_t n) {
     const char* b = static_cast<const char*>(p);
     while (n) {
-        const int r = int(send(s, b, int(n), 0));
+        const int r = int(send(s, b, int(n), MSG_NOSIGNAL));
         if (r <= 0) return false;
         b += r, n -= size_t(r);
     }
@@ -76,22 +90,33 @@ inline void set_nonblocking(sock_t s, bool on) {
 #endif
 }
 
+// Whether a socket gets ready within ms, to read or to write; a failed connect counts. poll on POSIX: select's set has
+// no room for a descriptor past FD_SETSIZE, and the game keeps many files open.
+inline bool wait_socket(sock_t s, bool write, int ms) {
+#ifdef _WIN32
+    fd_set set, err;
+    FD_ZERO(&set);
+    FD_ZERO(&err);
+    FD_SET(s, &set);
+    FD_SET(s, &err);
+    timeval tv{ms / 1000, (ms % 1000) * 1000};
+    return select(0, write ? nullptr : &set, write ? &set : nullptr, &err, &tv) > 0;
+#else
+    pollfd p{s, short(write ? POLLOUT : POLLIN), 0};
+    return poll(&p, 1, ms) > 0;
+#endif
+}
+
 // connect() that gives up after ms, as an unreachable address would take long.
 inline sock_t connect_within(const sockaddr_in& a, int ms) {
     const sock_t s = socket(AF_INET, SOCK_STREAM, 0);
     if (s == kBadSock) return kBadSock;
+    no_sigpipe(s);
     set_nonblocking(s, true);
     connect(s, reinterpret_cast<const sockaddr*>(&a), sizeof a);
-    fd_set w, e;
-    FD_ZERO(&w);
-    FD_ZERO(&e);
-    FD_SET(s, &w);
-    FD_SET(s, &e);
-    timeval tv{ms / 1000, (ms % 1000) * 1000};
     int err = 1;
     socklen_t len = sizeof err;
-    if (select(int(s) + 1, nullptr, &w, &e, &tv) <= 0 || FD_ISSET(s, &e) ||
-        getsockopt(s, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&err), &len) || err) {
+    if (!wait_socket(s, true, ms) || getsockopt(s, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&err), &len) || err) {
         sock_close(s);
         return kBadSock;
     }

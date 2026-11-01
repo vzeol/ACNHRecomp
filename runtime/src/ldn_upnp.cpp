@@ -137,11 +137,7 @@ bool find_igd(Igd& igd) {
     bool found = false;
     const auto end = std::chrono::steady_clock::now() + std::chrono::seconds(3);
     while (!found && std::chrono::steady_clock::now() < end) {
-        fd_set set;
-        FD_ZERO(&set);
-        FD_SET(s, &set);
-        timeval tv{0, 300000};
-        if (select(int(s) + 1, &set, nullptr, nullptr, &tv) <= 0) continue;
+        if (!wait_socket(s, false, 300)) continue;
         char b[2048];
         const int r = int(recv(s, b, sizeof b - 1, 0));
         if (r <= 0) continue;

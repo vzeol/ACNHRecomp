@@ -145,11 +145,7 @@ int link_scan(uint8_t* out, int max, const uint8_t* filter, int max_results_size
     std::lock_guard lk(g_found_lock);
     g_found.clear();
     for (;;) {
-        fd_set set;
-        FD_ZERO(&set);
-        FD_SET(s, &set);
-        timeval tv{0, kScanMs * 1000};
-        if (select(int(s) + 1, &set, nullptr, nullptr, &tv) <= 0) break;
+        if (!wait_socket(s, false, kScanMs)) break;
         sockaddr_in from{};
         socklen_t fl = sizeof from;
         const int r = int(recvfrom(s, reinterpret_cast<char*>(in.data()), int(in.size()), 0,

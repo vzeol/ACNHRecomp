@@ -3,9 +3,9 @@
 // Off by default, as on a console in airplane mode: Initialize answers ResultDeviceDisabled and the game says local
 // play is unavailable (before, it reached the ipc stub, got no session object back and read through a null pointer).
 //
-// NX_LDN=1: step 1 of local play over the local network (docs/LOCAL_PLAY.md): the API answers as a console with
-// wireless on, finds no other islands and lets the game open its own network, and logs every call with what the game
-// passed (configurations as hex), to learn which calls the game makes, in what order and with what.
+// online.enabled or NX_LDN=1: local play between computers (docs/LOCAL_PLAY.md): the API answers as a console with
+// wireless on, its network is the link of ldn_link.cpp, and every call is logged with what the game passed
+// (configurations as hex).
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>

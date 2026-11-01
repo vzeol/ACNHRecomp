@@ -46,6 +46,7 @@ struct Peer {
 
 std::atomic<Role> g_role{kNoRole};
 std::atomic<bool> g_stopping{false};
+std::atomic<bool> g_listening{false};  // host: its port is really open (g_role says it hosts even when it could not)
 sock_t g_listen = kBadSock;
 std::thread g_accept_thread;
 std::mutex g_peers_lock;
@@ -66,6 +67,13 @@ bool send_frame(Peer& peer, uint8_t type, const void* a, uint32_t alen, const vo
 void no_delay(sock_t s) {
     int one = 1;
     setsockopt(s, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&one), sizeof one);
+}
+
+// The connection ended: its socket with it (a later node on this slot, or the next join, brings its own).
+void peer_ended(Peer& p) {
+    p.alive = false;
+    std::lock_guard lk(p.tx);
+    stop_socket(p.fd);
 }
 
 // Host: to the host's own sockets and/or the stations. from: the sending node, 0 = the host.
@@ -90,7 +98,7 @@ void host_reader(int node) {
         h.src_ip = p.ip;  // whatever it claims
         route(node, h, f.data() + sizeof h, uint32_t(f.size() - sizeof h));
     }
-    p.alive = false;
+    peer_ended(p);
     if (!g_stopping) {
         log("ldn: node %d left", node);
         ldn_link_remove_node(node);
@@ -102,6 +110,7 @@ void host_accept() {
     while (!g_stopping) {
         const sock_t fd = accept(g_listen, nullptr, nullptr);
         if (fd == kBadSock) return;
+        no_sigpipe(fd);
         no_delay(fd);
         set_timeout(fd, kHandshakeMs);  // nobody holds the accept loop for long
         uint8_t type = 0;
@@ -157,7 +166,7 @@ void station_reader() {
             vsock_deliver(h.src_ip, h.src_port, h.dst_ip, h.dst_port, f.data() + sizeof h, n);
         }
     }
-    p.alive = false;
+    peer_ended(p);
     if (!g_stopping) {
         log("ldn: the link to the host ended");
         ldn_link_lost();
@@ -241,7 +250,7 @@ LinkStatus link_status() {
     std::lock_guard lk(g_status_lock);
     LinkStatus s = g_status;
     s.players = 0;
-    s.hosting = g_role == kHost;
+    s.hosting = g_listening;
     for (int i = 1; i < kMaxNodes; i++) s.players += g_peers[i].alive ? 1 : 0;
     return s;
 }
@@ -279,6 +288,7 @@ void link_host_start() {
         return;
     }
     log("ldn: hosting on port %u", port);
+    g_listening = true;
     g_accept_thread = std::thread(host_accept);
     upnp_start();
 }
@@ -286,6 +296,7 @@ void link_host_start() {
 void link_stop() {
     upnp_stop();
     g_stopping = true;
+    g_listening = false;
     discovery_answer_stop();
     stop_socket(g_listen);
     if (g_accept_thread.joinable()) g_accept_thread.join();
